@@ -61,6 +61,14 @@ export type PartUpdateInput = z.infer<typeof PartUpdateSchema>;
 // .agents/instructions.md, which lists "discarded" as a valid event_type.
 // The actual model uses "scrapped"; there is no "discarded" value.
 //
+// part_id is NOT part of this schema even though it's `null: false` in
+// schema.rb: the real backend route is nested under
+// /companies/:company_id/parts/:part_id/lifecycle_events (confirmed against
+// the live swagger.yaml's LifecycleEventInput, which has no part_id
+// property) — the backend takes it from the URL, not the body. The SDK
+// mirrors that: LifecycleEventsResource methods take `partId` as a
+// parameter instead of expecting it in the payload.
+//
 // No update schema is exported: lifecycle_events only supports find/create
 // (see resources/lifecycleEvents.ts, ticket 06) — editing a historical
 // event that already happened doesn't make business sense, so the SDK
@@ -68,7 +76,6 @@ export type PartUpdateInput = z.infer<typeof PartUpdateSchema>;
 // ---------------------------------------------------------------------------
 
 export const LifecycleEventCreateSchema = z.object({
-  part_id: z.number({ required_error: "part_id is required" }),
   event_type: z.enum(
     ["installed", "maintenance", "replaced_wear", "replaced_defect", "reassigned", "scrapped"],
     { required_error: "event_type is required" }

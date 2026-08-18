@@ -72,7 +72,6 @@ describe("PartUpdateSchema", () => {
 
 describe("LifecycleEventCreateSchema", () => {
   const validEvent = {
-    part_id: 1,
     event_type: "installed",
     occurred_at: "2026-08-18T00:00:00.000Z",
     age_at_event_days: 0,
@@ -92,7 +91,7 @@ describe("LifecycleEventCreateSchema", () => {
     expect(LifecycleEventCreateSchema.parse(input)).toEqual(input);
   });
 
-  it.each(["part_id", "event_type", "occurred_at", "age_at_event_days"])(
+  it.each(["event_type", "occurred_at", "age_at_event_days"])(
     "rejects a payload missing %s",
     (field) => {
       const { [field]: _omitted, ...rest } = validEvent as Record<string, unknown>;
