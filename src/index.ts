@@ -2,7 +2,7 @@
 //
 // Public entry point of the package. Re-exports only `AssetPulseClient`
 // and its public types — the only thing anyone installing
-// @assetpulse/sdk should ever import. Internal plumbing (the Zod schemas,
+// @thiagohrcosta/assetpulse-sdk should ever import. Internal plumbing (the Zod schemas,
 // HttpClient/createHttpClient, env.ts) stays unexported.
 
 export { AssetPulseClient } from "./client";

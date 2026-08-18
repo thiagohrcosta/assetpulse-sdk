@@ -11,10 +11,10 @@
 //      is localhost/127.0.0.1 in the browser, or `NODE_ENV ===
 //      "development"` on the server (Next.js Server Component/Server
 //      Action/Route Handler, where `window` doesn't exist).
-//   4. Placeholder production URL (`DEFAULT_PRODUCTION_URL`).
+//   4. Production URL (`DEFAULT_PRODUCTION_URL`), pointing at the Render
+//      deployment.
 
-// TODO: v2 - update once backend is deployed (Fly.io/Render)
-const DEFAULT_PRODUCTION_URL = "https://PRODUCTION_URL/api/v1";
+const DEFAULT_PRODUCTION_URL = "https://assetpulse-lfgt.onrender.com/api/v1";
 
 // The API is namespaced under `api/v1` (see asset-pulse-api's
 // `config/routes.rb`: `namespace :api do namespace :v1 do ... end end`),
