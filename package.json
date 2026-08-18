@@ -1,6 +1,6 @@
 {
-  "name": "@assetpulse/sdk",
-  "version": "0.1.0",
+  "name": "@thiagohrcosta/assetpulse-sdk",
+  "version": "0.1.1",
   "description": "Semantic npm client for the AssetPulse API (Rails) — built-in auth, environment resolution, and field validation.",
   "license": "MIT",
   "main": "./dist/index.js",
