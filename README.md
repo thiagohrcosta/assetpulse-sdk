@@ -1,3 +1,5 @@
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/73b8376c-cc7f-4da0-b124-a083d83dae49" />
+
 # @assetpulse/sdk
 
 **A typed, semantic TypeScript client for the AssetPulse API.**
