@@ -19,6 +19,7 @@ export interface HttpClient {
   get<TResponse = unknown>(path: string): Promise<TResponse>;
   post<TResponse = unknown, TBody = unknown>(path: string, body: TBody): Promise<TResponse>;
   patch<TResponse = unknown, TBody = unknown>(path: string, body: TBody): Promise<TResponse>;
+  delete<TResponse = unknown>(path: string): Promise<TResponse>;
 }
 
 export class AssetPulseApiError extends Error {
@@ -33,7 +34,7 @@ export class AssetPulseApiError extends Error {
   }
 }
 
-type HttpMethod = "GET" | "POST" | "PATCH";
+type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 const jsonHeaders = {
   "Content-Type": "application/json",
@@ -121,5 +122,10 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
       request<TResponse>(path, "POST", body),
     patch: <TResponse = unknown, TBody = unknown>(path: string, body: TBody) =>
       request<TResponse>(path, "PATCH", body),
+    // Real backend returns 204 No Content on delete (see swagger.yaml) —
+    // parseJsonResponse already returns `undefined` for an empty body, so
+    // TResponse defaults to `unknown` and callers typically await this as
+    // Promise<void>.
+    delete: <TResponse = unknown>(path: string) => request<TResponse>(path, "DELETE"),
   };
 }

@@ -1,9 +1,19 @@
 // resources/hostUnits.ts
 //
 // Responsibility: semantic resource for the `host_units` table.
-// find(vin) -> GET /host_units/:vin (vin is the unique identifier)
-// create(input) -> validates with HostUnitCreateSchema, then POST /host_units
-// update(vin, changes) -> validates partially, then PATCH /host_units/:vin
+//
+// Every route is nested under the company (confirmed against the live
+// backend's swagger.yaml at /api-docs): /api/v1/companies/:company_id/host_units[/:id].
+// companyId is bound once at construction — same pattern for parts.ts —
+// since a given SDK client instance always acts on behalf of one company.
+//
+// list() -> GET /companies/:companyId/host_units
+// find(id) -> GET /companies/:companyId/host_units/:id (numeric primary key,
+//   not the vin — the backend has no lookup-by-vin route)
+// create(input) -> validates with HostUnitCreateSchema, then POST /companies/:companyId/host_units
+// update(id, changes) -> validates partially, then PATCH /companies/:companyId/host_units/:id
+// delete(id) -> DELETE /companies/:companyId/host_units/:id (backend returns 204;
+//   parts installed on this host unit have their host_unit_id nulled, not deleted)
 
 import type { HttpClient } from "../http";
 import {
@@ -25,10 +35,21 @@ export interface HostUnit {
 }
 
 export class HostUnitsResource {
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly companyId: number
+  ) {}
 
-  find(vin: string): Promise<HostUnit> {
-    return this.http.get<HostUnit>(`/host_units/${encodeURIComponent(vin)}`);
+  private basePath(): string {
+    return `/companies/${this.companyId}/host_units`;
+  }
+
+  list(): Promise<HostUnit[]> {
+    return this.http.get<HostUnit[]>(this.basePath());
+  }
+
+  find(id: number): Promise<HostUnit> {
+    return this.http.get<HostUnit>(`${this.basePath()}/${id}`);
   }
 
   // async so a Zod validation failure rejects the returned promise instead
@@ -37,11 +58,15 @@ export class HostUnitsResource {
   // error from http.ts.
   async create(input: HostUnitCreateInput): Promise<HostUnit> {
     const payload = HostUnitCreateSchema.parse(input);
-    return this.http.post<HostUnit, HostUnitCreateInput>("/host_units", payload);
+    return this.http.post<HostUnit, HostUnitCreateInput>(this.basePath(), payload);
   }
 
-  async update(vin: string, changes: HostUnitUpdateInput): Promise<HostUnit> {
+  async update(id: number, changes: HostUnitUpdateInput): Promise<HostUnit> {
     const payload = HostUnitUpdateSchema.parse(changes);
-    return this.http.patch<HostUnit, HostUnitUpdateInput>(`/host_units/${encodeURIComponent(vin)}`, payload);
+    return this.http.patch<HostUnit, HostUnitUpdateInput>(`${this.basePath()}/${id}`, payload);
+  }
+
+  delete(id: number): Promise<void> {
+    return this.http.delete<void>(`${this.basePath()}/${id}`);
   }
 }

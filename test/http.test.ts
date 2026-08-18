@@ -72,6 +72,23 @@ describe("createHttpClient", () => {
     });
   });
 
+  it("sends authenticated DELETE requests and returns undefined for an empty 204 body", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createHttpClient({ token, baseUrl });
+
+    await expect(client.delete("/parts/1")).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith(`${baseUrl}/parts/1`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: undefined,
+    });
+  });
+
   it("throws AssetPulseApiError for singular Rails error responses", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ error: "Missing token" }, 401)));
 
