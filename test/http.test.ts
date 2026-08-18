@@ -103,6 +103,41 @@ describe("createHttpClient", () => {
     await expect(promise).rejects.toBeInstanceOf(AssetPulseApiError);
   });
 
+  it("falls back to a generic message instead of throwing when a 500 response isn't JSON", async () => {
+    const htmlResponse = new Response("<html>Internal Server Error</html>", {
+      status: 500,
+      headers: { "Content-Type": "text/html" },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(htmlResponse));
+
+    const client = createHttpClient({ token, baseUrl });
+    const promise = client.get("/host_units");
+
+    await expect(promise).rejects.toMatchObject({
+      name: "AssetPulseApiError",
+      status: 500,
+      body: "<html>Internal Server Error</html>",
+      message: "AssetPulse API request failed with status 500",
+    });
+    await expect(promise).rejects.toBeInstanceOf(AssetPulseApiError);
+  });
+
+  it("wraps network-level failures (e.g. offline/DNS) in AssetPulseApiError", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("Failed to fetch"))
+    );
+
+    const client = createHttpClient({ token, baseUrl });
+    const promise = client.get("/host_units");
+
+    await expect(promise).rejects.toMatchObject({
+      name: "AssetPulseApiError",
+      status: 0,
+    });
+    await expect(promise).rejects.toBeInstanceOf(AssetPulseApiError);
+  });
+
   it("throws synchronously when token is empty before calling fetch", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

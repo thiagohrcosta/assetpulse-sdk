@@ -1,3 +1,13 @@
+// http.ts
+//
+// Responsibility: the central fetch wrapper — resolves baseUrl + path,
+// attaches `Authorization: Bearer <token>` and `Content-Type:
+// application/json` on every call, exposes get/post/patch, and turns
+// error responses (status >= 400) into a readable `AssetPulseApiError`
+// instead of letting the raw fetch error leak out. Fails fast at
+// construction time if `token` is missing (doesn't wait for the first
+// network call to complain).
+
 import { resolveBaseUrl } from "./env";
 
 export interface HttpClientOptions {
@@ -52,7 +62,15 @@ async function parseJsonResponse(response: Response): Promise<unknown> {
   const text = await response.text();
   if (text.length === 0) return undefined;
 
-  return JSON.parse(text) as unknown;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    // Not valid JSON (e.g. an upstream proxy/HTML error page instead of a
+    // Rails response). Fall back to the raw text instead of letting a raw
+    // SyntaxError escape — normalizeErrorMessage() falls back to a generic
+    // status-based message when the body isn't a Rails error shape.
+    return text;
+  }
 }
 
 export function createHttpClient(options: HttpClientOptions): HttpClient {
@@ -74,12 +92,14 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
         },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
-    } catch (error) {
-      // Network-level failures do not have an HTTP status. We use status 0 so
-      // callers can still detect them through the SDK's public error class.
-      throw new AssetPulseApiError("AssetPulse API request failed before receiving a response", {
+    } catch (cause) {
+      // Network-level failures (offline, DNS, CORS, etc.) don't have an HTTP
+      // status. We use status: 0 so callers can still detect them through the
+      // SDK's public error class instead of a raw `TypeError: Failed to fetch`.
+      const reason = cause instanceof Error ? cause.message : String(cause);
+      throw new AssetPulseApiError(`AssetPulse API request failed before receiving a response: ${reason}`, {
         status: 0,
-        body: undefined
+        body: undefined,
       });
     }
 
